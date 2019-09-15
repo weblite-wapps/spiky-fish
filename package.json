@@ -1,0 +1,13 @@
+{
+  "main": "./index.html",
+  "scripts": {
+    "start": "parcel index.html public/**/* --open --port 8000",
+    "build": "parcel build ./index.html public/**/* --public-url ./"
+  },
+  "dependencies": {
+    "browserify": "^16.5.0",
+    "db": "^1.1.1",
+    "parcel": "^1.12.3",
+    "superagent": "^5.1.0"
+  }
+}

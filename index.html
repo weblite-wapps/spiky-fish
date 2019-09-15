@@ -3,13 +3,17 @@
   <head>
     <meta charset="utf-8" />
   </head>
-
-  <body onclick="clickFun()">
-    <img src="./images/sea.jpg" class="background--image" alt="" />
-    <img src="./images/fish.png" id="player" />
+  <body>
+    <img src="/public/sea.jpg" class="background--image" alt="" />
+    <img src="/public/fish.png" id="player" />
     <p id="score"></p>
-    <p id="failText" onclick="retryFun()">try again !</p>
-
+    <p id="failText">try again !</p>
+    <button id="scoresButton">Top Scores</button>
+    <div id="topScores">
+      <h3>Top Scores</h3>
+      <ol id="scoresList"></ol>
+      <button id="backButton">Back</button>
+    </div>
     <style>
       .bubble-shape {
         width: 12px;
@@ -97,7 +101,7 @@
         width: 100px;
         left: calc(50% - 50px);
         height: 50px;
-        font-size: 20px;
+        font-size: 16px;
         border-radius: 30px;
         z-index: 3;
         background-color: #ed143d47;
@@ -114,246 +118,65 @@
           transform: scale(1.2);
         }
       }
+
+      #topScores {
+        margin: auto;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        height: 90%;
+        background-color: rgba(216, 27, 65, 0.767);
+        width: 80%;
+        font-size: 18px;
+        z-index: 20;
+        color: white;
+        display: none;
+        /* border: 1px solid black; */
+      }
+
+      #scoresButton {
+        position: fixed;
+        justify-content: center;
+        align-items: center;
+        top: 70%;
+        width: 100px;
+        left: calc(50% - 50px);
+        height: 50px;
+        font-size: 14px;
+        border-radius: 30px;
+        z-index: 3;
+        background-color: #ed143d47;
+        color: whitesmoke;
+        cursor: pointer;
+        display: none;
+      }
+
+      #backButton {
+        position: fixed;
+        justify-content: center;
+        align-items: center;
+        top: 72%;
+        width: 100px;
+        left: calc(50% - 50px);
+        height: 50px;
+        font-size: 16px;
+        border-radius: 30px;
+        z-index: 3;
+        background-color: #ed143d47;
+        color: whitesmoke;
+        cursor: pointer;
+        background-color: rgb(161, 161, 161);
+      }
+
+      h3 {
+        text-align: center;
+      }
+
+      body {
+        user-select: none;
+      }
     </style>
-
-    <script>
-      const W = window.W;
-      W.setHooks();
-      const width = document.body.clientWidth;
-      const height = document.body.getBoundingClientRect().height;
-
-      const obsNumber = height / 38;
-      let visObsNum = obsNumber / 4;
-
-      const fps = 60;
-      const deltaTime = 1 / fps;
-
-      let gAcc = 9.8;
-
-      let direction = 1;
-
-      let failure = false;
-
-      let speedY = 0;
-      let speedX = 3;
-      let score = 0;
-      let playerPosY = height / 5;
-      let playerPosX = width / 2;
-      let playerDim = 30;
-
-      let leftObstacles = [];
-      let rightObstacles = [];
-      let topObstacles = [];
-
-      document.getElementById("failText").style.display = "none";
-
-      //creating obsticles
-
-      for (let i = 0; i < obsNumber; i++) {
-        const obs = document.createElement("img");
-        obs.className = "rightObs";
-        obs.id = i;
-        obs.style.display = "none";
-        obs.style.height = `${20}px`;
-        obs.style.width = `${30}px`;
-        obs.style.position = "absolute";
-        obs.style.top = `${i * 35 + 35}px`;
-        obs.style.right = "0";
-        obs.src = "./images/spike.png";
-        obs.style.transform = "rotate(180deg) translateX(-14px)";
-        rightObstacles.push(obs);
-        document.body.appendChild(obs);
-      }
-
-      for (let i = 0; i < obsNumber; i++) {
-        const obs = document.createElement("img");
-        obs.className = "leftObs";
-        obs.id = i;
-        obs.style.display = "none";
-        obs.style.height = `${20}px`;
-        obs.style.width = `${30}px`;
-        obs.style.position = "absolute";
-        obs.style.top = `${i * 35 + 35}px`;
-        obs.style.left = "0";
-        obs.src = "./images/spike.png";
-        obs.style.transform = "rotate(0deg) translateX(-14px)";
-        leftObstacles.push(obs);
-        document.body.appendChild(obs);
-      }
-
-      for (let i = 0; i < width / 30; i++) {
-        const obs = document.createElement("img");
-        obs.className = "topObs";
-        obs.style.display = "inline";
-        obs.id = i;
-        obs.style.height = `${20}px`;
-        obs.style.width = `${30}px`;
-        obs.style.position = "absolute";
-        obs.style.left = `${i * 35}px`;
-        obs.style.top = "0";
-        obs.src = "./images/spike.png";
-        obs.style.transform = "rotate(90deg) translateX(-14px)";
-        topObstacles.push(obs);
-        document.body.appendChild(obs);
-      }
-
-      //functions
-
-      const makeRand = function(max, numOfNumbers) {
-        let randNumbers = [];
-        for (let i = 0; i < numOfNumbers; i++) {
-          let rand = Math.floor(Math.random() * Math.floor(max));
-          if (randNumbers.includes(rand)) {
-            i--;
-          } else randNumbers.push(rand);
-        }
-        return randNumbers;
-      };
-
-      const makeRightObsVisible = function() {
-        let randNumbers = makeRand(obsNumber, visObsNum);
-        let num;
-        for (num of randNumbers) {
-          rightObstacles[num].style.display = "inline";
-        }
-        for (obs of leftObstacles) {
-          obs.style.display = "none";
-        }
-      };
-
-      const makeLeftObsVisible = function() {
-        let randNumbers = makeRand(obsNumber, visObsNum);
-        let num;
-        for (num of randNumbers) {
-          leftObstacles[num].style.display = "inline";
-        }
-        for (obs of rightObstacles) {
-          obs.style.display = "none";
-        }
-      };
-
-      const wallCollision = function(x) {
-        if (x <= 0) {
-          makeRightObsVisible();
-          score++;
-          direction *= -1;
-          document.getElementById(
-            "player"
-          ).style.transform = `scaleX(${direction})`;
-          new Audio("score.mp3").play();
-        } else if (x >= width - playerDim) {
-          makeLeftObsVisible();
-          score++;
-          direction *= -1;
-          document.getElementById(
-            "player"
-          ).style.transform = `scaleX(${direction})`;
-          new Audio("score.mp3").play();
-          if (score == 10 || score == 36 || score == 70 || score == 100)
-            speedX++;
-        }
-      };
-
-      const obsCollision = function(x, y) {
-        let failed = false;
-        for (let i = 0; i < leftObstacles.length; i++) {
-          if (
-            leftObstacles[i].style.display === "inline" &&
-            x <= playerDim - 20 &&
-            i * 35 + 35 + 5 < y + playerDim / 2 &&
-            y + playerDim / 2 < i * 35 + playerDim + 35 - 5
-          ) {
-            console.log("crashed left");
-            console.log(leftObstacles[i].id);
-            failed = true;
-            break;
-          } else if (
-            rightObstacles[i].style.display === "inline" &&
-            x + playerDim >= width - 30 + 20 &&
-            i * 35 + 35 + 5 < y + playerDim / 2 &&
-            y + playerDim / 2 < i * 35 + playerDim + 35 - 5
-          ) {
-            console.log("crashed right");
-            console.log(leftObstacles[i].id);
-            failed = true;
-            break;
-          }
-        }
-        return failed;
-      };
-
-      const failed = function(x, y) {
-        if (obsCollision(x, y) || y <= 10 || y >= height - playerDim + 1) {
-          speedX = 0;
-          speedY = 0;
-          document.getElementById("failText").style.display = "flex";
-          document.body.onclick = Function.prototype;
-          failure = true;
-        }
-      };
-
-      const bubbleMaker = function(x, y) {
-        if (direction == 1) x = x - 10;
-        else x = x + playerDim;
-        const bubble = document.createElement("div");
-        const bubbleContainer = document.createElement("div");
-        bubbleContainer.appendChild(bubble);
-        bubble.classList.add("bubble-shape");
-        bubbleContainer.classList.add("bubble-up");
-        bubbleContainer.style.top = y + "px";
-        bubbleContainer.style.left = x + "px";
-        bubble.classList.add("bubble-shake");
-        document.body.appendChild(bubbleContainer);
-        console.log(bubbleContainer);
-        setTimeout(() => {
-          document.body.removeChild(bubbleContainer);
-        }, 1500);
-      };
-
-      function retryFun() {
-        console.log("clicked");
-        location.reload();
-      }
-
-      function clickFun() {
-        speedY = 4;
-        bubbleMaker(playerPosX, playerPosY);
-      }
-      // Game implementation
-
-      const initializePlayer = function(player) {
-        player.style.position = "fixed";
-        player.style.left = `calc(50% - ${playerDim / 2}px)`;
-        player.style.top = `${playerPosY - playerDim / 2}px`;
-      };
-
-      document.body.addEventListener("keydown", e => {
-        if (e.key === " " && !failure) {
-          speedY = 4;
-          bubbleMaker(playerPosX, playerPosY);
-        }
-      });
-
-      const player = document.getElementById("player");
-      initializePlayer(player);
-
-      setInterval(function() {
-        speedY -= deltaTime * gAcc;
-        playerPosY -= speedY;
-        playerPosX -= speedX * direction;
-        player.style.left = `${playerPosX}px`;
-        player.style.top = `${playerPosY}px`;
-        wallCollision(playerPosX);
-        failed(playerPosX, playerPosY);
-        document.getElementById("score").innerHTML = score;
-      }, 1000 / fps);
-
-      setInterval(function() {
-        if (visObsNum < obsNumber - 3) visObsNum++;
-      }, 14000);
-
-      console.log("width :" + width, "height " + height);
-      console.log("obstacles : " + obsNumber, " visObstacles :", visObsNum);
-    </script>
   </body>
+  <script src="./src/main.js"></script>
 </html>
